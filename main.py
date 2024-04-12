@@ -144,13 +144,14 @@ def main() -> None:
 
     model_url="http://localhost:8000/yolov8m_epi_safety"
     model_file="yolov8m_epi_safety.pt"
+    normal_model_file="yolov8m_epi_safety.onnx"
 
     if args.image:
         triton_yolov8 = YOLOv8Triton(YOLOv8TestType.IMAGE, data, setup, model_url, model_file)
-        normal_yolov8 = NormalYOLOv8(YOLOv8TestType.IMAGE, data, model_file)
+        normal_yolov8 = NormalYOLOv8(YOLOv8TestType.IMAGE, data, normal_model_file)
     elif args.video:
         triton_yolov8 = YOLOv8Triton(YOLOv8TestType.VIDEO, data, setup, model_url, model_file)
-        normal_yolov8 = NormalYOLOv8(YOLOv8TestType.VIDEO, data, model_file)
+        normal_yolov8 = NormalYOLOv8(YOLOv8TestType.VIDEO, data, normal_model_file)
     
     print("> Começando a inferência usando o triton")
     start_triton = time.time()
