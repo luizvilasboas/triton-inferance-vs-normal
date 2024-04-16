@@ -116,6 +116,7 @@ dmypy.json
 
 # Processed data
 *-proc.jpg
+*-proc.png
 *-proc.mp4
 
 # Triton models
