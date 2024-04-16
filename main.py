@@ -9,6 +9,7 @@ import argparse
 from utils import get_proc_filename, calculate_time, add_prefix_filename
 from abc import abstractmethod
 import time
+import sys
 
 
 class YOLOv8TestType:
@@ -24,7 +25,7 @@ class YOLOv8:
         self.prefix = None
 
     @abstractmethod
-    def run(self) -> None:
+    def run(self) -> tuple[int, int, int]:
         pass
 
     def _run_model_image(self):
@@ -36,9 +37,14 @@ class YOLOv8:
         cap = cv2.VideoCapture(self.data)
         out = cv2.VideoWriter(add_prefix_filename(get_proc_filename(self.data), self.prefix), cv2.VideoWriter_fourcc('m', 'p', '4', 'v'), cap.get(cv2.CAP_PROP_FPS), (int(
             cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))))
+        frame_numbers = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        frame_count = 0
 
+        print(f"> Total de frames: {frame_numbers}")
         while cap.isOpened():
             success, frame = cap.read()
+
+            print(f"Frame atual: {frame_count}", end="\r")
 
             if success:
                 results = self.model.track(frame, persist=True, verbose=False)
@@ -48,6 +54,8 @@ class YOLOv8:
                 out.write(annotated_frame)
             else:
                 break
+
+            frame_count += 1
 
         cap.release()
         out.release()
@@ -61,11 +69,20 @@ class NormalYOLOv8(YOLOv8):
         self.data = data
         self.prefix = "normal-"
 
-    def run(self) -> None:
+    def run(self) -> tuple[int, int, int]:
+        print("> Inicializando a inferência da maneira normal")
+
+        start = time.time()
         if self.type == YOLOv8TestType.IMAGE:
             self._run_model_image()
         elif self.type == YOLOv8TestType.VIDEO:
             self._run_model_video()
+        end = time.time()
+
+        time_total = end - start 
+        hours, minutes, seconds = calculate_time(time_total)
+
+        return hours, minutes, seconds
 
 
 class YOLOv8Triton(YOLOv8):
@@ -77,7 +94,7 @@ class YOLOv8Triton(YOLOv8):
         self.prefix = "triton-"
         self.model_file = model_file
 
-    def run(self) -> None:
+    def run(self) -> tuple[int, int, int]:
         triton_repo_path = "tmp/triton_repo"
 
         if self.setup:
@@ -85,12 +102,21 @@ class YOLOv8Triton(YOLOv8):
 
         container_id = self.__init_inferance_server(triton_repo_path)
 
+        print("> Inicializando a inferência com o triton")
+
+        start = time.time()
         if self.type == YOLOv8TestType.IMAGE:
             self._run_model_image()
         elif self.type == YOLOv8TestType.VIDEO:
             self._run_model_video()
+        end = time.time()
+
+        time_total = end - start 
+        hours, minutes, seconds = calculate_time(time_total)
 
         self.__end_inferance_server(container_id)
+
+        return hours, minutes, seconds
 
     def __setup_repository(self) -> str:
         model = YOLO(self.model_file)
@@ -109,9 +135,13 @@ class YOLOv8Triton(YOLOv8):
 
     def __init_inferance_server(self, triton_repo_path: str) -> str:
         tag = 'nvcr.io/nvidia/tritonserver:23.09-py3'
-        subprocess.call(f'docker pull {tag}', shell=True, stdout=subprocess.DEVNULL)
+
+        print("> Puxando servidor trition do docker")
+        subprocess.call(f'docker pull {tag}', shell=True)
+
+        print("> Inicializando o servidor de inferência do triton")
         container_id = subprocess.check_output(
-            f'docker run -d --rm -v ./{triton_repo_path}:/models -p 8000:8000 {tag} tritonserver --model-repository=/models', shell=True).decode('utf-8').strip()
+            f'docker run --gpus all --net=host -d --rm -v ./{triton_repo_path}:/models -p 8000:8000 -p 8001:8001 -p 8002:8002 {tag} tritonserver --model-repository=/models', shell=True).decode('utf-8').strip()
 
         triton_client = InferenceServerClient(
             url='localhost:8000', verbose=False, ssl=False)
@@ -126,7 +156,8 @@ class YOLOv8Triton(YOLOv8):
         return container_id
 
     def __end_inferance_server(self, container_id: str) -> None:
-        subprocess.call(f'docker kill {container_id}', shell=True, stdout=subprocess.DEVNULL)
+        print("> Matando o servidor de inferência do triton")
+        subprocess.call(f'docker kill {container_id}', shell=True)
 
 
 def main() -> None:
@@ -142,34 +173,23 @@ def main() -> None:
 
     triton_yolov8 = normal_yolov8 = None
 
-    model_url="http://localhost:8000/yolov8m_epi_safety"
-    model_file="yolov8m_epi_safety.pt"
-    normal_model_file="yolov8m_epi_safety.onnx"
+    model_url="http://localhost:8000/yolo"
+    model_file="yolov8n.pt"
 
     if args.image:
         triton_yolov8 = YOLOv8Triton(YOLOv8TestType.IMAGE, data, setup, model_url, model_file)
-        normal_yolov8 = NormalYOLOv8(YOLOv8TestType.IMAGE, data, normal_model_file)
+        normal_yolov8 = NormalYOLOv8(YOLOv8TestType.IMAGE, data, model_file)
     elif args.video:
         triton_yolov8 = YOLOv8Triton(YOLOv8TestType.VIDEO, data, setup, model_url, model_file)
-        normal_yolov8 = NormalYOLOv8(YOLOv8TestType.VIDEO, data, normal_model_file)
+        normal_yolov8 = NormalYOLOv8(YOLOv8TestType.VIDEO, data, model_file)
     
     print("> Começando a inferência usando o triton")
-    start_triton = time.time()
-    triton_yolov8.run()
-    end_triton = time.time()
-
-    time_total = end_triton - start_triton 
-    hours, minutes, seconds = calculate_time(time_total)
+    hours, minutes, seconds = triton_yolov8.run()
 
     print(f"> O tempo total de Inferência usando o triton foi de {hours} horas, {minutes} minutos, {seconds} segundos.")
 
     print("> Começando a inferência usando a forma normal")
-    start_normal = time.time()
-    normal_yolov8.run()
-    end_normal = time.time()
-
-    time_total = end_normal - start_normal
-    hours, minutes, seconds = calculate_time(time_total)
+    hours, minutes, seconds = normal_yolov8.run()
 
     print(f"> O tempo total de Inferência usando da forma normal foi de {hours} horas, {minutes} minutos, {seconds} segundos.")
 
