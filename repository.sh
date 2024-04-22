@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 YOLO_VERSION="yolov8n.pt"
-YOLO_REPO_NAME="yolo8n"
+YOLO_REPO_NAME="yolov8n"
 
 yolo_export_command="yolo export model=${YOLO_VERSION} format=onnx dynamic=True device=0 batch=4"
 eval "$yolo_export_command"
@@ -16,7 +16,7 @@ cp "${YOLO_REPO_NAME}.onnx" tmp/triton_repo/1 || {
   exit 1
 }
 
-cp config.pbtxt.sample tmp/triton_repo/ || {
+cp config.pbtxt.sample tmp/triton_repo/config.pbtxt || {
   echo "Error copying configuration file: config.pbtxt.sample"
   exit 1
 }
