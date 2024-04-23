@@ -6,7 +6,6 @@ from utils import get_proc_filename, calculate_time, add_prefix_filename
 from abc import abstractmethod
 import time
 
-
 class YOLOv8TestType:
     VIDEO = 0
     IMAGE = 1
@@ -34,11 +33,11 @@ class YOLOv8:
         frame_numbers = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         frame_count = 0
 
-        # print(f"> Total de frames: {frame_numbers}")
+        print(f"> Total de frames: {frame_numbers}")
         while cap.isOpened():
             success, frame = cap.read()
 
-            # print(f"Frame atual: {frame_count}", end="\r")
+            print(f"Frame atual: {frame_count}", end="\r")
 
             if success:
                 results = self.model.track(frame, persist=True, verbose=False)
@@ -57,7 +56,7 @@ class YOLOv8:
 
 
 class NormalYOLOv8(YOLOv8):
-    def __init__(self, type: YOLOv8TestType, data: str, model_file = "yolov8n.pt") -> None:
+    def __init__(self, type: YOLOv8TestType, data: str, model_file: str) -> None:
         self.type = type
         self.model = YOLO(model_file, task='detect')
         self.data = data
@@ -80,9 +79,8 @@ class NormalYOLOv8(YOLOv8):
 
 
 class YOLOv8Triton(YOLOv8):
-    def __init__(self, type: YOLOv8TestType, data: str, setup=False, model_url = "http://localhost:8000/yolo") -> None:
+    def __init__(self, type: YOLOv8TestType, data: str, model_url: str) -> None:
         self.type = type
-        self.setup = setup
         self.model = YOLO(model_url, task='detect')
         self.data = data
         self.prefix = "triton-"
@@ -102,35 +100,45 @@ class YOLOv8Triton(YOLOv8):
 
         return hours, minutes, seconds
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Simple program to test if trition is good for our use")
     parser.add_argument('data', metavar='DATA', type=str, help="The name of the file (image or video) to use")
-    parser.add_argument("--image", "-i", action="store_true", help="Set data as a image")
-    parser.add_argument("--video", "-v", action="store_true", help="Set data as a video")
-    parser.add_argument("--setup", "-s", action="store_true", help="Setup triton repository with YOLOv8")
-    parser.add_argument("--triton", "-t", action="store_true", help="Just use triton")
-    parser.add_argument("--normal", "-n", action="store_true", help="Just use normal")
+    parser.add_argument("--image", action="store_true", help="Set data as a image")
+    parser.add_argument("--video", action="store_true", help="Set data as a video")
+    parser.add_argument("--triton", action="store_true", help="Just use triton")
+    parser.add_argument("--normal", action="store_true", help="Just use normal")
+    parser.add_argument("--grpc", action="store_true", help="Use gRPC")
+    parser.add_argument("--http", action="store_true", help="Use HTTP")
+
 
     args = parser.parse_args()
     data = args.data
-    setup = args.setup
     triton = args.triton
     normal = args.normal
+    grpc = args.grpc
+    http = args.http
 
     triton_yolov8 = normal_yolov8 = None
 
-    model_url="http://localhost:8000/yolo"
-    model_file="yolov8n.onnx"
+    if grpc:
+        print("> Usando gRPC")
+        model_url="grpc://localhost:8001/yolov8n"
+    elif http:
+        print("> Usando HTTP")
+        model_url="http://localhost:8000/yolov8n"
+
+    model_file="yolov8n.pt"
 
     if args.image:
         if triton:
-            triton_yolov8 = YOLOv8Triton(YOLOv8TestType.IMAGE, data, setup, model_url)
-        elif normal:
+            triton_yolov8 = YOLOv8Triton(YOLOv8TestType.IMAGE, data, model_url)
+        if normal:
             normal_yolov8 = NormalYOLOv8(YOLOv8TestType.IMAGE, data, model_file)
     elif args.video:
         if triton:
-            triton_yolov8 = YOLOv8Triton(YOLOv8TestType.VIDEO, data, setup, model_url)
-        elif normal:
+            triton_yolov8 = YOLOv8Triton(YOLOv8TestType.VIDEO, data, model_url)
+        if normal:
             normal_yolov8 = NormalYOLOv8(YOLOv8TestType.VIDEO, data, model_file)
     
     if triton:
