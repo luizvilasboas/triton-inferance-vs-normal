@@ -3,7 +3,7 @@
 YOLO_VERSION="yolov8n.pt"
 YOLO_REPO_NAME="yolov8n"
 
-yolo_export_command="yolo export model=${YOLO_VERSION} format=onnx dynamic=True device=0"
+yolo_export_command="yolo export model=${YOLO_VERSION} format=onnx dynamic=False device=0"
 eval "$yolo_export_command"
 
 mkdir -p tmp/triton_repo/${YOLO_REPO_NAME}/1 || {
