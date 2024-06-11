@@ -13,6 +13,8 @@ This project aims to determine the most efficient approach for deploying YOLO-ba
 
 ## Usage
 
+To run the project, follow these steps:
+
 1. Install the dependencies with the command bellow: 
 
     ```
