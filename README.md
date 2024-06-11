@@ -13,45 +13,36 @@ This project aims to determine the most efficient approach for deploying YOLO-ba
 
 ## Usage
 
-### Step 1: Install dependencies:
+1. Install the dependencies with the command bellow: 
 
-Install the dependencies with the command bellow: 
+    ```
+    pip install -r requirements.txt
+    ```
 
-```
-pip install -r requirements.txt
-```
+2. Setup the repository for Triton by running this bash script:
 
-### Step 2: Setup the repository:
+    ```
+    bash repository.sh 
+    ```
 
-Setup the repository for Triton by running this bash script:
+3. Run the inference server by running this bash script:
 
-```
-bash repository.sh 
-```
+    ```
+    bash server.sh
+    ```
 
-### Step 3: Run the inference server:
+4. Run the client:
 
-Run the inference server by running this bash script:
+    ```
+    python3 main.py --video videos/family-dog-test-video.mp4 --triton --normal --http
+    ```
 
-```
-bash server.sh
-```
+5. Use more options:
 
-### Step 4: Run the client:
 
-Run the `main.py` client into a video with Triton and without Triton with HTTP with this command bellow:
-
-```
-python3 main.py --video videos/family-dog-test-video.mp4 --triton --normal --http
-```
-
-### Step 5: Use more options:
-
-To see other options, run the command bellow:
-
-```
-python3 main.py --help
-```
+    ```
+    python3 main.py --help
+    ```
 
 ## Contributing
 
