@@ -52,4 +52,4 @@ If you wish to contribute to this project, feel free to open a merge request. We
 
 ## License
 
-This project is licensed under the [The Unlicense](https://gitlab.com/olooeez/triton-inferance-vs-normal/-/blob/main/LICENSE). Refer to the LICENSE file for more details.
+This project is licensed under the [The Unlicense](https://github.com/luizvilasboas/triton-inferance-vs-normal/blob/main/LICENSE). Refer to the LICENSE file for more details.
