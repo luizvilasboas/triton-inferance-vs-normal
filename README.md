@@ -1,55 +1,81 @@
-# triton-inferance-vs-normal
+# triton-inference-vs-normal
 
-This project aims to determine the most efficient approach for deploying YOLO-based object detection models in your specific environment. We'll compare two primary methods:
+> A comparative analysis between deploying a YOLO object detection model directly versus serving it via the NVIDIA Triton Inference Server.
 
-* **Direct Model Loading**: This involves loading the YOLO model directly into your application using a framework-specific library (e.g., PyTorch, TensorFlow).
+## About the Project
 
-* **Triton Inference Server**: This approach utilizes NVIDIA's Triton Inference Server as an intermediary, enabling centralized model management, versioning, and potentially improved performance on NVIDIA GPUs.
+This project aims to determine the most efficient approach for deploying YOLO-based object detection models in a specific environment. It compares two primary methods:
 
-## Requirements
+1.  **Direct Model Loading**: Loading the YOLO model directly into a Python application using a framework-specific library (e.g., PyTorch).
+2.  **Triton Inference Server**: Utilizing NVIDIA's Triton as an intermediary, which enables centralized model management, versioning, and potentially improved performance.
 
-1. **Docker**: Use Docker version 24.07 or greater.
-2. **Python**: Use Python 3 version 3.10 or greater.
+The goal is to benchmark and understand the trade-offs between these two deployment strategies.
+
+## Tech Stack
+
+*   [Python](https://www.python.org/)
+*   [YOLO](https://github.com/ultralytics/yolov5)
+*   [NVIDIA Triton Inference Server](https://developer.nvidia.com/nvidia-triton-inference-server)
+*   [Docker](https://www.docker.com/)
 
 ## Usage
 
-To run the project, follow these steps:
+Below are the instructions for you to set up and run the comparison.
 
-1. Install the dependencies with the command bellow: 
+### Prerequisites
 
+You need to have the following software installed:
+
+*   [Python](https://www.python.org/downloads/) (version 3.10 or higher)
+*   [Docker](https://docs.docker.com/get-docker/) (version 24.07 or higher)
+
+### Installation and Setup
+
+Follow the steps below:
+
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/luizvilasboas/triton-inferance-vs-normal.git
     ```
+
+2.  **Navigate to the project directory**
+    ```bash
+    cd triton-inferance-vs-normal
+    ```
+
+3.  **Install Python dependencies**
+    ```bash
     pip install -r requirements.txt
     ```
 
-2. Setup the repository for Triton by running this bash script:
-
+4.  **Set up the Triton model repository**
+    Run the provided script to prepare the models for Triton.
+    ```bash
+    bash repository.sh
     ```
-    bash repository.sh 
-    ```
 
-3. Run the inference server by running this bash script:
+### Workflow
 
-    ```
+1.  **Start the Triton Server**
+    Run the server script to launch the Triton container.
+    ```bash
     bash server.sh
     ```
 
-4. Run the client:
-
-    ```
+2.  **Run the client for comparison**
+    Execute the client script, providing a video and flags to select the inference mode(s).
+    ```bash
+    # Example: Run both Triton and normal inference over HTTP
     python3 main.py --video videos/family-dog-test-video.mp4 --triton --normal --http
     ```
-
-5. Use more options:
-
-
-    ```
-    python3 main.py --help
-    ```
+    Use `python3 main.py --help` to see all available options.
 
 ## Contributing
 
-If you wish to contribute to this project, feel free to open a merge request. We welcome all forms of contribution!
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+
+If you have a suggestion that would make this better, please fork the repo and create a pull request.
 
 ## License
 
-This project is licensed under the [The Unlicense](https://github.com/luizvilasboas/triton-inferance-vs-normal/blob/main/LICENSE). Refer to the LICENSE file for more details.
+This project is licensed under The Unlicense. See the `LICENSE` file for details.
